@@ -1,4 +1,36 @@
 {
   "clubName": "Momentos Alegres Photobooth",
-  "moreText": "Interested in booking Momentos Alegres Photobooth for your event? Reach out below to check availability."
+  "moreText": "Interested in booking Momentos Alegres Photobooth for your event? Reach out below to check availability.",
+  "packages": [
+    {
+      "name": "Digital Photobooth Only",
+      "description": "Capture unlimited photos and instantly share them by text, email, or QR code. Includes custom photo template, setup, and breakdown.",
+      "price": 299
+    },
+    {
+      "name": "Print and Digital",
+      "description": "Everything included in the Digital Booth package, plus unlimited on-site photo prints for your guests to take home and enjoy.",
+      "price": 350
+    },
+    {
+      "name": "Video Guestbook",
+      "description": "Add-On. Memories to keep. Get all the heartfelt videos recorded by your guest to remember your special day. Perfect for all occasions.",
+      "price": 200
+    },
+    {
+      "name": "Props",
+      "description": "A photobooth just isn’t complete without the perfect prop! Included for free for any event over 2 hours.",
+      "price": 20
+    },
+    {
+      "name": "Custom Welcome Screen",
+      "description": "Included for free for any event 3+ hours. ",
+      "price": 30
+    },
+    {
+      "name": "USB Keepsake Flash Drive",
+      "description": "Aside from the digital gallery, take home all of your event photos and videos on a USB flash drive for easy sharing and long-term storage.",
+      "price": 30
+    }
+  ]
 }
