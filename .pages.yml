@@ -186,3 +186,13 @@ content:
             label: "Price (USD)"
             type: number
             required: true
+      - name: inquiryForm
+        label: "Inquiry Form (Supabase)"
+        type: object
+        fields:
+          - name: supabaseUrl
+            label: "Supabase Project URL"
+            type: string
+          - name: supabaseAnonKey
+            label: "Supabase Anon/Public Key"
+            type: string

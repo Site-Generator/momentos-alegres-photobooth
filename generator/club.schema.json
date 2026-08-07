@@ -100,6 +100,14 @@
           "price":       { "type": "number", "minimum": 0 }
         }
       }
+    },
+    "inquiryForm": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "supabaseUrl":     { "type": "string" },
+        "supabaseAnonKey": { "type": "string" }
+      }
     }
   }
 }

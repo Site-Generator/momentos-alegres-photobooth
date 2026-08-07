@@ -154,6 +154,93 @@
             qtyEl.textContent = String(qty);
             recalcInquiryTotal();
         });
+
+        // Inquiry form: collects the visitor's details plus whatever packages
+        // they've selected above, and inserts it straight into a Supabase
+        // table via its public REST API (no backend server on GitHub Pages).
+        var inquiryForm = document.getElementById('inquiry-form');
+        if (inquiryForm) {
+            inquiryForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                var statusEl = inquiryForm.querySelector('.inquiry-form-status');
+                var submitBtn = inquiryForm.querySelector('.inquiry-submit-btn');
+                var supabaseUrl = inquiryForm.getAttribute('data-supabase-url');
+                var supabaseKey = inquiryForm.getAttribute('data-supabase-key');
+
+                if (!supabaseUrl || !supabaseKey) {
+                    if (statusEl) {
+                        statusEl.textContent = "This form isn't connected yet — please reach out directly for now.";
+                        statusEl.className = 'inquiry-form-status is-error';
+                    }
+                    return;
+                }
+
+                var interestedPackages = [];
+                var total = 0;
+                document.querySelectorAll('.package-card').forEach(function (card) {
+                    var qtyEl = card.querySelector('.qty-value');
+                    var qty = qtyEl ? (parseInt(qtyEl.textContent, 10) || 0) : 0;
+                    if (qty <= 0) return;
+                    var price = parseFloat(card.getAttribute('data-price')) || 0;
+                    var nameEl = card.querySelector('.package-name');
+                    interestedPackages.push({
+                        name: nameEl ? nameEl.textContent : '',
+                        quantity: qty,
+                        price: price
+                    });
+                    total += price * qty;
+                });
+
+                var fd = new FormData(inquiryForm);
+                var guestCountRaw = fd.get('guest_count');
+                var payload = {
+                    name: fd.get('name'),
+                    email: fd.get('email'),
+                    phone: fd.get('phone') || null,
+                    preferred_contact: fd.get('preferred_contact') || null,
+                    event_type: fd.get('event_type') || null,
+                    event_location: fd.get('event_location') || null,
+                    event_date: fd.get('event_date') || null,
+                    guest_count: guestCountRaw ? parseInt(guestCountRaw, 10) : null,
+                    message: fd.get('message') || null,
+                    interested_packages: interestedPackages,
+                    estimated_total: total
+                };
+
+                if (submitBtn) submitBtn.disabled = true;
+                if (statusEl) {
+                    statusEl.textContent = 'Sending...';
+                    statusEl.className = 'inquiry-form-status';
+                }
+
+                fetch(supabaseUrl.replace(/\/$/, '') + '/rest/v1/inquiries', {
+                    method: 'POST',
+                    headers: {
+                        'apikey': supabaseKey,
+                        'Authorization': 'Bearer ' + supabaseKey,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=minimal'
+                    },
+                    body: JSON.stringify(payload)
+                }).then(function (res) {
+                    if (!res.ok) throw new Error('Request failed');
+                    inquiryForm.reset();
+                    document.querySelectorAll('.package-card .qty-value').forEach(function (el) { el.textContent = '0'; });
+                    recalcInquiryTotal();
+                    if (statusEl) {
+                        statusEl.textContent = "Thanks! We'll be in touch soon.";
+                        statusEl.className = 'inquiry-form-status is-success';
+                    }
+                }).catch(function () {
+                    if (statusEl) {
+                        statusEl.textContent = 'Something went wrong sending your inquiry — please try again.';
+                        statusEl.className = 'inquiry-form-status is-error';
+                    }
+                }).finally(function () {
+                    if (submitBtn) submitBtn.disabled = false;
+                });
+            });
+        }
     })();
 </script>
 

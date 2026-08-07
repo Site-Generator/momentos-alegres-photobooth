@@ -482,9 +482,62 @@ function formatPrice(n) {
 // inline script) reads that plus its own qty-value to keep the running
 // total in the sticky bar below in sync — no framework, just delegated
 // click handlers.
-function renderInquiryTabContent(packages) {
+function renderInquiryForm(inquiryForm) {
+    const supabaseUrl = (inquiryForm && inquiryForm.supabaseUrl) || "";
+    const supabaseAnonKey = (inquiryForm && inquiryForm.supabaseAnonKey) || "";
+    return `
+    <form id="inquiry-form" class="inquiry-form" data-supabase-url="${escapeHtml(supabaseUrl)}" data-supabase-key="${escapeHtml(supabaseAnonKey)}">
+      <div class="inquiry-form-grid">
+        <label class="inquiry-field">
+          <span>Name *</span>
+          <input type="text" name="name" required>
+        </label>
+        <label class="inquiry-field">
+          <span>Email *</span>
+          <input type="email" name="email" required>
+        </label>
+        <label class="inquiry-field">
+          <span>Phone</span>
+          <input type="tel" name="phone">
+        </label>
+        <label class="inquiry-field">
+          <span>Preferred Contact Method</span>
+          <select name="preferred_contact">
+            <option value="Email">Email</option>
+            <option value="Phone">Phone</option>
+            <option value="Text">Text</option>
+          </select>
+        </label>
+        <label class="inquiry-field">
+          <span>Event Type</span>
+          <input type="text" name="event_type" placeholder="Wedding, birthday, corporate...">
+        </label>
+        <label class="inquiry-field">
+          <span>Event Location</span>
+          <input type="text" name="event_location">
+        </label>
+        <label class="inquiry-field">
+          <span>Event Date</span>
+          <input type="date" name="event_date">
+        </label>
+        <label class="inquiry-field">
+          <span>Estimated Guest Count</span>
+          <input type="number" name="guest_count" min="0">
+        </label>
+        <label class="inquiry-field inquiry-field-wide">
+          <span>Message</span>
+          <textarea name="message" rows="3"></textarea>
+        </label>
+      </div>
+      <button type="submit" class="inquiry-submit-btn">Send Inquiry</button>
+      <div class="inquiry-form-status" aria-live="polite"></div>
+    </form>`;
+}
+
+function renderInquiryTabContent(packages, inquiryForm) {
+    const formHtml = renderInquiryForm(inquiryForm);
     if (!packages || packages.length === 0) {
-        return `<h2 class="tab-heading">Inquiry</h2><p class="empty-note">No packages listed yet — check back soon.</p>`;
+        return `<h2 class="tab-heading">Inquiry</h2>${formHtml}<p class="empty-note">No packages listed yet — check back soon.</p>`;
     }
     const cards = packages.map(p => {
         const price = Number(p.price) || 0;
@@ -508,6 +561,7 @@ function renderInquiryTabContent(packages) {
     }).join("");
     return `
     <h2 class="tab-heading">Inquiry</h2>
+    ${formHtml}
     <p class="inquiry-lead">Pick the packages and add-ons you're interested in — the total updates as you go.</p>
     <div class="package-grid">${cards}</div>
     <div class="inquiry-total-bar">
@@ -597,7 +651,7 @@ function renderAppShellPage(club, variant) {
         clubName: clubNameEsc,
         metaDescription: escapeHtml((club.description || club.clubName).slice(0, 155)),
         homeTabContent: renderHomeTabContent(club, variant),
-        eventsTabContent: renderInquiryTabContent(club.packages),
+        eventsTabContent: renderInquiryTabContent(club.packages, club.inquiryForm),
         membersTabContent: renderMembersTabContent(club),
         galleryTabContent: renderGallery(club.images, club.clubName) ||
             `<h2 class="tab-heading">Gallery</h2><p class="empty-note">No photos yet — check back soon.</p>`,
