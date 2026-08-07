@@ -669,11 +669,33 @@ function jsStringLiteralSafe(value) {
     return JSON.stringify(value || "").slice(1, -1);
 }
 
+// The admin page keeps its own palette, separate from the public site's
+// theme — it's a back office, and looking different from the customer-facing
+// site is the point. Hex values are schema-validated before we get here.
+const ADMIN_CSS_VAR_MAP = {
+    backgroundColor: "--bg",
+    surfaceColor:    "--surface",
+    textColor:       "--text",
+    mutedTextColor:  "--muted",
+    borderColor:     "--border",
+    accentColor:     "--accent",
+};
+
+function renderAdminThemeStyle(adminTheme) {
+    if (!adminTheme) return "";
+    const declarations = [];
+    for (const [field, cssVar] of Object.entries(ADMIN_CSS_VAR_MAP)) {
+        if (adminTheme[field]) declarations.push(`${cssVar}: ${adminTheme[field]};`);
+    }
+    if (declarations.length === 0) return "";
+    return `<style>:root{${declarations.join(" ")}}</style>`;
+}
+
 function renderAdminPage(club) {
     const template = fs.readFileSync(resolveTemplatePath("admin.html"), "utf8");
     return fillTokens(template, {
         clubName: escapeHtml(club.clubName),
-        themeOverrideStyle: renderThemeOverrideStyle(club.theme),
+        adminThemeStyle: renderAdminThemeStyle(club.adminTheme),
         supabaseUrl: jsStringLiteralSafe(club.inquiryForm && club.inquiryForm.supabaseUrl),
         supabaseAnonKey: jsStringLiteralSafe(club.inquiryForm && club.inquiryForm.supabaseAnonKey),
     });

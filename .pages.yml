@@ -196,3 +196,25 @@ content:
           - name: supabaseAnonKey
             label: "Supabase Anon/Public Key"
             type: string
+      - name: adminTheme
+        label: "Admin Page Colors"
+        type: object
+        fields:
+          - name: accentColor
+            label: "Accent Color (hex, default #e8a33d amber)"
+            type: string
+          - name: backgroundColor
+            label: "Background Color (hex, default #14110f near-black)"
+            type: string
+          - name: surfaceColor
+            label: "Panel/Card Color (hex, default #1e1a17)"
+            type: string
+          - name: textColor
+            label: "Text Color (hex, default #f2ede7 — keep high contrast against Background)"
+            type: string
+          - name: mutedTextColor
+            label: "Muted Text Color (hex, default #a3968b)"
+            type: string
+          - name: borderColor
+            label: "Border Color (hex, default #38312c)"
+            type: string

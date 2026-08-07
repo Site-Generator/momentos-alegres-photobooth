@@ -5,271 +5,936 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <title>Admin — {{clubName}}</title>
-    <link rel="stylesheet" href="app-shell.css">
-    {{themeOverrideStyle}}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        .admin-wrap { max-width: 1000px; margin: 0 auto; padding: 40px 20px 80px; }
-        .admin-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
-        .admin-header h1 { font-family: var(--head-font); font-size: 1.6rem; margin: 0; }
-        .admin-logout-btn {
-            border: 1px solid var(--border); background: var(--surface); color: var(--text);
-            border-radius: 999px; padding: 8px 16px; font: inherit; cursor: pointer;
-        }
-        .admin-panel {
-            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
-            padding: 24px; max-width: 420px;
-        }
-        .admin-field { display: flex; flex-direction: column; gap: 6px; font-size: .85rem; font-weight: 600; margin-bottom: 14px; }
-        .admin-field input {
-            font: inherit; font-weight: 400; color: var(--text); background: var(--bg);
-            border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px;
-        }
-        .admin-submit-btn {
-            border: 0; border-radius: 999px; padding: 10px 20px; background: var(--primary);
-            color: #fff; font: inherit; font-weight: 700; cursor: pointer;
-        }
-        .admin-submit-btn:disabled { opacity: .6; cursor: not-allowed; }
-        .admin-google-btn {
-            width: 100%; border: 1px solid var(--border); border-radius: 999px; padding: 10px 20px;
-            background: var(--bg); color: var(--text); font: inherit; font-weight: 600; cursor: pointer;
-        }
-        .admin-google-btn:hover { background: var(--surface); }
-        .admin-divider { display: flex; align-items: center; gap: 10px; margin: 16px 0; color: var(--muted); font-size: .8rem; }
-        .admin-divider::before, .admin-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
-        .admin-status { margin-top: 12px; font-size: .85rem; }
-        .admin-status.is-success { color: #1a7f37; }
-        .admin-status.is-error { color: #cf222e; }
-        .admin-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-lg); }
-        table.admin-table { width: 100%; border-collapse: collapse; font-size: .85rem; white-space: nowrap; }
-        table.admin-table th, table.admin-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); text-align: left; }
-        table.admin-table th { background: var(--surface); font-weight: 700; }
-        table.admin-table td.wrap-cell { white-space: normal; min-width: 200px; }
-        .admin-empty-note { color: var(--muted); font-size: .9rem; }
-        [hidden] { display: none !important; }
+    /* ============================================================
+       Momentos Alegres — back office
+       Darkroom surfaces, marigold accent, film-sprocket motif.
+       Self-contained: deliberately does NOT load app-shell.css, so
+       the admin never gets mistaken for the customer-facing site.
+       ============================================================ */
+    :root {
+        --bg:        #14110f;
+        --surface:   #1e1a17;
+        --text:      #f2ede7;
+        --muted:     #a3968b;
+        --border:    #38312c;
+        --accent:    #e8a33d;
+
+        /* Derived — follow whatever the CMS sets above */
+        --raised:    color-mix(in srgb, var(--surface), var(--text) 6%);
+        --accent-soft: color-mix(in srgb, var(--accent), transparent 88%);
+        --hairline:  color-mix(in srgb, var(--border), transparent 40%);
+
+        /* Semantic status colors — fixed, never CMS-controlled */
+        --st-new:       var(--accent);
+        --st-contacted: #6ba8d6;
+        --st-booked:    #62b87a;
+        --st-declined:  var(--muted);
+
+        --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+        --body:    "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        --mono:    "IBM Plex Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+
+        --r:    10px;
+        --r-lg: 14px;
+    }
+
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--body);
+        font-size: 15px;
+        line-height: 1.55;
+        -webkit-font-smoothing: antialiased;
+    }
+    button, input, select, textarea { font: inherit; color: inherit; }
+    [hidden] { display: none !important; }
+
+    :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+
+    /* ---------- Top bar ---------- */
+    .topbar {
+        display: flex; align-items: center; gap: 20px;
+        padding: 0 clamp(16px, 3vw, 28px);
+        height: 60px;
+        border-bottom: 1px solid var(--border);
+        background: var(--surface);
+        position: sticky; top: 0; z-index: 20;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    /* Sprocket hole — the film motif, at its smallest */
+    .brand-mark {
+        width: 11px; height: 11px; border-radius: 3px;
+        background: var(--accent); flex-shrink: 0;
+    }
+    .brand-name {
+        font-family: var(--display); font-weight: 700; font-size: 1rem;
+        letter-spacing: -.01em; white-space: nowrap;
+        overflow: hidden; text-overflow: ellipsis;
+    }
+    .sections { display: flex; gap: 4px; margin-left: auto; }
+    .section-tab {
+        background: none; border: 0; cursor: pointer;
+        padding: 7px 14px; border-radius: 999px;
+        color: var(--muted); font-weight: 600; font-size: .875rem;
+        transition: color .15s, background .15s;
+    }
+    .section-tab:hover { color: var(--text); background: var(--raised); }
+    .section-tab.is-active { color: var(--accent); background: var(--accent-soft); }
+    .btn-ghost {
+        background: none; border: 1px solid var(--border); cursor: pointer;
+        padding: 7px 14px; border-radius: 999px;
+        color: var(--muted); font-size: .8125rem; font-weight: 600;
+        transition: color .15s, border-color .15s;
+    }
+    .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+
+    /* ---------- Login ---------- */
+    .login-wrap {
+        min-height: calc(100vh - 60px);
+        display: grid; place-items: center;
+        padding: 32px 20px;
+    }
+    .login-card {
+        width: 100%; max-width: 380px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--r-lg);
+        padding: 32px 28px;
+    }
+    .login-eyebrow {
+        margin: 0 0 4px;
+        font-family: var(--mono); font-size: .6875rem;
+        letter-spacing: .14em; text-transform: uppercase; color: var(--accent);
+    }
+    .login-title {
+        font-family: var(--display); font-weight: 700;
+        font-size: 1.75rem; letter-spacing: -.02em; margin: 0 0 22px;
+    }
+    .btn-google {
+        width: 100%; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; gap: 10px;
+        padding: 12px 18px; min-height: 46px;
+        background: var(--text); color: var(--bg);
+        border: 0; border-radius: var(--r);
+        font-weight: 600; font-size: .9375rem;
+        transition: opacity .15s;
+    }
+    .btn-google:hover { opacity: .88; }
+    .divider {
+        display: flex; align-items: center; gap: 12px;
+        margin: 18px 0; color: var(--muted);
+        font-family: var(--mono); font-size: .6875rem;
+        letter-spacing: .1em; text-transform: uppercase;
+    }
+    .divider::before, .divider::after {
+        content: ""; flex: 1; height: 1px; background: var(--border);
+    }
+    .field { display: block; margin-bottom: 14px; }
+    .field > span {
+        display: block; margin-bottom: 6px;
+        font-size: .75rem; font-weight: 600;
+        letter-spacing: .04em; text-transform: uppercase; color: var(--muted);
+    }
+    .field input {
+        width: 100%; padding: 11px 13px; min-height: 44px;
+        background: var(--bg); color: var(--text);
+        border: 1px solid var(--border); border-radius: var(--r);
+    }
+    .field input::placeholder { color: color-mix(in srgb, var(--muted), transparent 35%); }
+    .btn-accent {
+        width: 100%; cursor: pointer; min-height: 46px;
+        padding: 12px 18px;
+        background: none; color: var(--accent);
+        border: 1px solid var(--accent); border-radius: var(--r);
+        font-weight: 600;
+        transition: background .15s;
+    }
+    .btn-accent:hover { background: var(--accent-soft); }
+    .btn-accent:disabled { opacity: .5; cursor: not-allowed; }
+    .status { margin: 12px 0 0; font-size: .8125rem; min-height: 1.2em; }
+    .status.is-success { color: var(--st-booked); }
+    .status.is-error   { color: #e0776b; }
+
+    /* ---------- App layout ---------- */
+    .app { padding: clamp(18px, 3vw, 28px) clamp(16px, 3vw, 28px) 40px; }
+
+    /* ---------- Stat frames (the signature: a strip of film frames) ---------- */
+    .stats {
+        display: grid; gap: 10px; margin-bottom: 22px;
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .frame {
+        position: relative;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--r);
+        padding: 20px 16px 16px;
+        overflow: hidden;
+    }
+    /* Sprocket perforations, top and bottom — reads as 35mm film */
+    .frame::before, .frame::after {
+        content: ""; position: absolute; left: 0; right: 0; height: 7px;
+        background-image: radial-gradient(circle at center, var(--bg) 0 2px, transparent 2.2px);
+        background-size: 11px 7px;
+        opacity: .9;
+    }
+    .frame::before { top: 0; }
+    .frame::after  { bottom: 0; }
+    .frame-value {
+        font-family: var(--display); font-weight: 700;
+        font-size: clamp(1.5rem, 4vw, 1.875rem); line-height: 1.05;
+        letter-spacing: -.02em; font-variant-numeric: tabular-nums;
+    }
+    .frame-label {
+        margin-top: 5px;
+        font-family: var(--mono); font-size: .625rem;
+        letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+    }
+    .frame.is-lead .frame-value { color: var(--accent); }
+
+    /* ---------- Toolbar ---------- */
+    .toolbar {
+        display: flex; flex-wrap: wrap; gap: 10px;
+        align-items: center; margin-bottom: 16px;
+    }
+    .search {
+        flex: 1 1 220px; min-width: 0; min-height: 42px;
+        padding: 10px 14px;
+        background: var(--surface); color: var(--text);
+        border: 1px solid var(--border); border-radius: 999px;
+        font-size: .875rem;
+    }
+    .search::placeholder { color: var(--muted); }
+    .filters { display: flex; gap: 6px; flex-wrap: wrap; }
+    .filter-chip {
+        cursor: pointer; padding: 8px 13px; min-height: 38px;
+        background: var(--surface); color: var(--muted);
+        border: 1px solid var(--border); border-radius: 999px;
+        font-size: .8125rem; font-weight: 600;
+        transition: color .15s, border-color .15s;
+    }
+    .filter-chip:hover { color: var(--text); }
+    .filter-chip.is-active {
+        color: var(--accent); border-color: var(--accent); background: var(--accent-soft);
+    }
+
+    /* ---------- Split: list + detail ---------- */
+    .split { display: grid; gap: 18px; grid-template-columns: 1fr; align-items: start; }
+
+    .list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+    .list-item {
+        position: relative; width: 100%; text-align: left; cursor: pointer;
+        display: block; padding: 13px 14px 13px 16px;
+        background: var(--surface);
+        border: 1px solid var(--border); border-radius: var(--r);
+        transition: background .15s, border-color .15s;
+    }
+    .list-item:hover { background: var(--raised); }
+    .list-item.is-selected { border-color: var(--accent); background: var(--raised); }
+    /* Selected marker — a single accent bar, the one flourish on the row */
+    .list-item.is-selected::before {
+        content: ""; position: absolute; left: -1px; top: 10px; bottom: 10px;
+        width: 3px; border-radius: 0 3px 3px 0; background: var(--accent);
+    }
+    .list-row { display: flex; align-items: baseline; gap: 10px; }
+    .list-name {
+        font-weight: 600; font-size: .9375rem; flex: 1; min-width: 0;
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .list-meta {
+        margin-top: 3px; font-size: .8125rem; color: var(--muted);
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .list-date {
+        font-family: var(--mono); font-size: .6875rem; color: var(--muted);
+        flex-shrink: 0;
+    }
+
+    .pill {
+        display: inline-block; flex-shrink: 0;
+        padding: 2px 9px; border-radius: 999px;
+        font-family: var(--mono); font-size: .625rem; font-weight: 500;
+        letter-spacing: .08em; text-transform: uppercase;
+        border: 1px solid currentColor;
+    }
+    .pill[data-status="New"]       { color: var(--st-new); }
+    .pill[data-status="Contacted"] { color: var(--st-contacted); }
+    .pill[data-status="Booked"]    { color: var(--st-booked); }
+    .pill[data-status="Declined"]  { color: var(--st-declined); }
+
+    /* ---------- Detail ---------- */
+    .detail {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--r-lg);
+        padding: 22px;
+    }
+    .detail-back {
+        display: none; margin-bottom: 14px;
+        background: none; border: 0; cursor: pointer;
+        color: var(--muted); font-size: .8125rem; font-weight: 600;
+        padding: 8px 0; min-height: 44px;
+    }
+    .detail-name {
+        font-family: var(--display); font-weight: 700;
+        font-size: 1.375rem; letter-spacing: -.02em; margin: 0 0 3px;
+    }
+    .detail-contact { margin: 0 0 20px; color: var(--muted); font-size: .875rem; }
+    .detail-contact a { color: var(--accent); text-decoration: none; }
+    .detail-contact a:hover { text-decoration: underline; }
+
+    .status-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 22px; }
+    .status-btn {
+        cursor: pointer; padding: 7px 13px; min-height: 38px;
+        background: none; color: var(--muted);
+        border: 1px solid var(--border); border-radius: 999px;
+        font-size: .8125rem; font-weight: 600;
+        transition: color .15s, border-color .15s;
+    }
+    .status-btn:hover { color: var(--text); }
+    .status-btn.is-current { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+    .status-btn:disabled { opacity: .5; cursor: wait; }
+
+    .detail-grid {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 16px; padding: 18px 0; border-top: 1px solid var(--hairline);
+    }
+    .dt {
+        font-family: var(--mono); font-size: .625rem;
+        letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+        margin-bottom: 4px;
+    }
+    .dd { font-size: .9375rem; word-break: break-word; }
+    .dd.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+    .detail-block { padding: 18px 0 0; border-top: 1px solid var(--hairline); }
+    .detail-message { margin: 0; white-space: pre-wrap; font-size: .9375rem; }
+    .pkg-list { list-style: none; margin: 0; padding: 0; }
+    .pkg-item {
+        display: flex; justify-content: space-between; gap: 12px;
+        padding: 7px 0; border-bottom: 1px solid var(--hairline);
+        font-size: .875rem;
+    }
+    .pkg-item:last-child { border-bottom: 0; }
+    .pkg-qty { color: var(--muted); font-family: var(--mono); font-size: .8125rem; }
+    .pkg-total {
+        display: flex; justify-content: space-between; gap: 12px;
+        margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--border);
+        font-weight: 700;
+    }
+    .pkg-total .num { font-family: var(--mono); color: var(--accent); font-variant-numeric: tabular-nums; }
+
+    /* ---------- Empty states ---------- */
+    .empty {
+        background: var(--surface); border: 1px dashed var(--border);
+        border-radius: var(--r-lg); padding: 44px 28px; text-align: center;
+    }
+    .empty-title {
+        font-family: var(--display); font-weight: 700; font-size: 1.125rem;
+        margin: 0 0 6px;
+    }
+    .empty-text { margin: 0; color: var(--muted); font-size: .875rem; max-width: 42ch; margin-inline: auto; }
+
+    /* ---------- Responsive ---------- */
+    @media (min-width: 620px) {
+        .stats { grid-template-columns: repeat(4, 1fr); }
+    }
+    @media (min-width: 900px) {
+        .split { grid-template-columns: minmax(280px, 360px) 1fr; }
+        .detail { position: sticky; top: 78px; }
+    }
+    /* Below 900px the detail takes over the screen when a row is opened */
+    @media (max-width: 899px) {
+        .detail-col { display: none; }
+        body.detail-open .list-col { display: none; }
+        body.detail-open .detail-col { display: block; }
+        body.detail-open .stats,
+        body.detail-open .toolbar { display: none; }
+        .detail-back { display: block; }
+    }
+
+    /* Touch devices get full-size hit targets; pointer devices stay compact
+       so the toolbar doesn't eat vertical space on a dense list. */
+    @media (pointer: coarse) {
+        .filter-chip, .status-btn, .section-tab, .btn-ghost { min-height: 44px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        * { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+    }
     </style>
+    {{adminThemeStyle}}
 </head>
 <body>
 
-<div class="admin-wrap">
-    <div class="admin-header">
-        <h1>Inquiries</h1>
-        <button type="button" class="admin-logout-btn" id="admin-logout-btn" hidden>Log out</button>
+<header class="topbar">
+    <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">{{clubName}}</span>
     </div>
+    <nav class="sections" id="sections" hidden>
+        <button type="button" class="section-tab is-active" data-section="inquiries">Inquiries</button>
+        <button type="button" class="section-tab" data-section="bookings">Bookings</button>
+    </nav>
+    <button type="button" class="btn-ghost" id="logout-btn" hidden>Log out</button>
+</header>
 
-    <section class="admin-panel" id="admin-login-panel">
-        <button type="button" class="admin-google-btn" id="admin-google-btn">Sign in with Google</button>
-        <div class="admin-divider"><span>or</span></div>
-        <p>Enter your admin email — we'll send you a one-time login link.</p>
-        <form id="admin-login-form">
-            <label class="admin-field">
+<!-- ---------- Signed out ---------- -->
+<main class="login-wrap" id="login-view">
+    <section class="login-card">
+        <p class="login-eyebrow">Back office</p>
+        <h1 class="login-title">Sign in</h1>
+        <button type="button" class="btn-google" id="google-btn">Continue with Google</button>
+        <div class="divider"><span>or</span></div>
+        <form id="login-form">
+            <label class="field">
                 <span>Email</span>
-                <input type="email" name="email" required>
+                <input type="email" name="email" required placeholder="you@example.com" autocomplete="email">
             </label>
-            <button type="submit" class="admin-submit-btn">Send Login Link</button>
+            <button type="submit" class="btn-accent">Send login link</button>
         </form>
-        <div class="admin-status" id="admin-login-status" aria-live="polite"></div>
+        <p class="status" id="login-status" aria-live="polite"></p>
+    </section>
+</main>
+
+<!-- ---------- Signed in ---------- -->
+<main class="app" id="app-view" hidden>
+
+    <section data-panel="inquiries">
+        <div class="stats" id="stats"></div>
+
+        <div class="toolbar">
+            <input type="search" class="search" id="search" placeholder="Search name, email, event type…" aria-label="Search inquiries">
+            <div class="filters" id="filters" role="group" aria-label="Filter by status"></div>
+            <button type="button" class="btn-ghost" id="export-btn">Export CSV</button>
+        </div>
+
+        <div class="split">
+            <div class="list-col">
+                <ul class="list" id="list"></ul>
+                <div class="empty" id="list-empty" hidden>
+                    <p class="empty-title">Nothing here</p>
+                    <p class="empty-text" id="list-empty-text">No inquiries yet. When someone submits the form on your site, they'll show up here.</p>
+                </div>
+            </div>
+            <div class="detail-col" id="detail-col"></div>
+        </div>
     </section>
 
-    <section id="admin-data-panel" hidden>
-        <div class="admin-table-wrap">
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>Received</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <th>Preferred Contact</th>
-                        <th>Event Type</th>
-                        <th>Event Location</th>
-                        <th>Event Date</th>
-                        <th>Guests</th>
-                        <th>Message</th>
-                        <th>Interested Packages</th>
-                        <th>Est. Total</th>
-                    </tr>
-                </thead>
-                <tbody id="admin-table-body"></tbody>
-            </table>
+    <section data-panel="bookings" hidden>
+        <div class="empty">
+            <p class="empty-title">Bookings aren't set up yet</p>
+            <p class="empty-text">Once you're ready to track confirmed events — dates, deposits, and what's owed — this is where they'll live. Mark an inquiry as <strong>Booked</strong> in the meantime to keep track of who's confirmed.</p>
         </div>
-        <p class="admin-empty-note" id="admin-empty-note" hidden>No inquiries yet.</p>
     </section>
-</div>
+
+</main>
 
 <script>
 (function () {
+    "use strict";
+
     var SUPABASE_URL = "{{supabaseUrl}}";
     var SUPABASE_ANON_KEY = "{{supabaseAnonKey}}";
-    var SESSION_KEY = 'admin_session';
+    var SESSION_KEY = "admin_session";
+    var STATUSES = ["New", "Contacted", "Booked", "Declined"];
 
-    var loginPanel = document.getElementById('admin-login-panel');
-    var dataPanel = document.getElementById('admin-data-panel');
-    var loginForm = document.getElementById('admin-login-form');
-    var loginStatus = document.getElementById('admin-login-status');
-    var logoutBtn = document.getElementById('admin-logout-btn');
-    var googleBtn = document.getElementById('admin-google-btn');
-    var tableBody = document.getElementById('admin-table-body');
-    var emptyNote = document.getElementById('admin-empty-note');
+    var el = {
+        loginView:   document.getElementById("login-view"),
+        appView:     document.getElementById("app-view"),
+        loginForm:   document.getElementById("login-form"),
+        loginStatus: document.getElementById("login-status"),
+        googleBtn:   document.getElementById("google-btn"),
+        logoutBtn:   document.getElementById("logout-btn"),
+        sections:    document.getElementById("sections"),
+        stats:       document.getElementById("stats"),
+        search:      document.getElementById("search"),
+        filters:     document.getElementById("filters"),
+        exportBtn:   document.getElementById("export-btn"),
+        list:        document.getElementById("list"),
+        listEmpty:   document.getElementById("list-empty"),
+        listEmptyText: document.getElementById("list-empty-text"),
+        detailCol:   document.getElementById("detail-col")
+    };
 
+    var state = { rows: [], selectedId: null, search: "", filter: "All" };
+
+    /* ---------- tiny DOM helpers (textContent only — never innerHTML,
+       because every field here is submitted by the public form) ---------- */
+    function node(tag, cls, text) {
+        var n = document.createElement(tag);
+        if (cls) n.className = cls;
+        if (text != null && text !== "") n.textContent = String(text);
+        return n;
+    }
+    function clear(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+
+    function money(v) {
+        return v == null || v === "" ? "—" : "$" + Number(v).toFixed(2);
+    }
+    function shortDate(v) {
+        if (!v) return "—";
+        var d = new Date(v);
+        if (isNaN(d)) return String(v);
+        return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+    }
+    function eventDate(v) {
+        // date-only column: parse as local, not UTC, so it doesn't shift a day
+        if (!v) return "—";
+        var p = String(v).split("-");
+        if (p.length !== 3) return String(v);
+        var d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+        return isNaN(d) ? String(v) : d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+    }
+    function statusOf(r) {
+        return STATUSES.indexOf(r.status) === -1 ? "New" : r.status;
+    }
+
+    /* ---------- auth ---------- */
     function getSession() {
         try {
             var raw = sessionStorage.getItem(SESSION_KEY);
             if (!raw) return null;
-            var session = JSON.parse(raw);
-            if (!session.access_token || !session.expires_at || Date.now() >= session.expires_at) return null;
-            return session;
-        } catch (e) {
-            return null;
-        }
+            var s = JSON.parse(raw);
+            if (!s.access_token || !s.expires_at || Date.now() >= s.expires_at) return null;
+            return s;
+        } catch (e) { return null; }
     }
-
-    function setSession(tokenResponse) {
-        var expires_at = Date.now() + (tokenResponse.expires_in || 3600) * 1000;
+    function setSession(token, expiresIn) {
         sessionStorage.setItem(SESSION_KEY, JSON.stringify({
-            access_token: tokenResponse.access_token,
-            expires_at: expires_at
+            access_token: token,
+            expires_at: Date.now() + (expiresIn || 3600) * 1000
         }));
     }
+    function clearSession() { sessionStorage.removeItem(SESSION_KEY); }
 
-    function clearSession() {
-        sessionStorage.removeItem(SESSION_KEY);
+    function consumeHashToken() {
+        var hash = window.location.hash;
+        if (!hash || hash.indexOf("access_token") === -1) return;
+        var p = new URLSearchParams(hash.slice(1));
+        var token = p.get("access_token");
+        if (!token) return;
+        setSession(token, parseInt(p.get("expires_in"), 10) || 3600);
+        history.replaceState(null, "", window.location.pathname + window.location.search);
     }
 
-    function formatPackages(list) {
-        if (!list || !list.length) return "";
-        return list.map(function (p) { return p.name + " x" + p.quantity; }).join(", ");
+    function showSignedIn() {
+        el.loginView.hidden = true;
+        el.appView.hidden = false;
+        el.logoutBtn.hidden = false;
+        el.sections.hidden = false;
     }
-
-    function escapeText(value) {
-        var div = document.createElement('div');
-        div.textContent = value == null ? "" : String(value);
-        return div.innerHTML;
-    }
-
-    function renderRows(rows) {
-        if (!rows || rows.length === 0) {
-            tableBody.innerHTML = "";
-            emptyNote.hidden = false;
-            return;
+    function showSignedOut(message) {
+        el.loginView.hidden = false;
+        el.appView.hidden = true;
+        el.logoutBtn.hidden = true;
+        el.sections.hidden = true;
+        document.body.classList.remove("detail-open");
+        if (message) {
+            el.loginStatus.textContent = message;
+            el.loginStatus.className = "status is-error";
         }
-        emptyNote.hidden = true;
-        tableBody.innerHTML = rows.map(function (r) {
-            return "<tr>" +
-                "<td>" + escapeText(r.created_at ? new Date(r.created_at).toLocaleString() : "") + "</td>" +
-                "<td>" + escapeText(r.name) + "</td>" +
-                "<td>" + escapeText(r.email) + "</td>" +
-                "<td>" + escapeText(r.phone) + "</td>" +
-                "<td>" + escapeText(r.preferred_contact) + "</td>" +
-                "<td>" + escapeText(r.event_type) + "</td>" +
-                "<td>" + escapeText(r.event_location) + "</td>" +
-                "<td>" + escapeText(r.event_date) + "</td>" +
-                "<td>" + escapeText(r.guest_count) + "</td>" +
-                "<td class=\"wrap-cell\">" + escapeText(r.message) + "</td>" +
-                "<td class=\"wrap-cell\">" + escapeText(formatPackages(r.interested_packages)) + "</td>" +
-                "<td>" + (r.estimated_total != null ? "$" + Number(r.estimated_total).toFixed(2) : "") + "</td>" +
-                "</tr>";
-        }).join("");
     }
 
-    function showLoggedIn() {
-        loginPanel.hidden = true;
-        dataPanel.hidden = false;
-        logoutBtn.hidden = false;
+    function authHeaders(token) {
+        return {
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": "Bearer " + token,
+            "Content-Type": "application/json"
+        };
     }
+    function api(path) { return SUPABASE_URL.replace(/\/$/, "") + path; }
 
-    function showLoggedOut() {
-        loginPanel.hidden = false;
-        dataPanel.hidden = true;
-        logoutBtn.hidden = true;
-    }
-
-    function loadInquiries(accessToken) {
-        fetch(SUPABASE_URL.replace(/\/$/, '') + '/rest/v1/inquiries?select=*&order=created_at.desc', {
-            headers: {
-                'apikey': SUPABASE_ANON_KEY,
-                'Authorization': 'Bearer ' + accessToken
-            }
+    /* ---------- data ---------- */
+    function loadInquiries() {
+        var session = getSession();
+        if (!session) { showSignedOut(); return; }
+        fetch(api("/rest/v1/inquiries?select=*&order=created_at.desc"), {
+            headers: authHeaders(session.access_token)
         }).then(function (res) {
-            if (!res.ok) throw new Error('Request failed');
+            if (!res.ok) throw new Error("load failed");
             return res.json();
         }).then(function (rows) {
-            renderRows(rows);
+            state.rows = rows || [];
+            render();
         }).catch(function () {
-            loginStatus.textContent = 'Could not load inquiries — your session may have expired, try logging in again.';
-            loginStatus.className = 'admin-status is-error';
             clearSession();
-            showLoggedOut();
+            showSignedOut("That session didn't work. Sign in again to load your inquiries.");
         });
     }
 
-    function tryConsumeHashToken() {
-        var hash = window.location.hash;
-        if (!hash || hash.indexOf('access_token') === -1) return false;
-        var params = new URLSearchParams(hash.slice(1));
-        var accessToken = params.get('access_token');
-        var expiresIn = params.get('expires_in');
-        if (!accessToken) return false;
-        setSession({ access_token: accessToken, expires_in: expiresIn ? parseInt(expiresIn, 10) : 3600 });
-        history.replaceState(null, '', window.location.pathname + window.location.search);
-        return true;
+    function updateStatus(id, status, buttons) {
+        var session = getSession();
+        if (!session) { showSignedOut(); return; }
+        buttons.forEach(function (b) { b.disabled = true; });
+        fetch(api("/rest/v1/inquiries?id=eq." + encodeURIComponent(id)), {
+            method: "PATCH",
+            headers: Object.assign(authHeaders(session.access_token), { "Prefer": "return=representation" }),
+            body: JSON.stringify({ status: status })
+        }).then(function (res) {
+            if (!res.ok) throw new Error("update failed");
+            return res.json();
+        }).then(function (updated) {
+            // An empty array means RLS silently blocked the write — a 2xx alone
+            // does not prove the row changed.
+            if (!updated || updated.length === 0) throw new Error("no row updated");
+            var row = state.rows.filter(function (r) { return r.id === id; })[0];
+            if (row) row.status = status;
+            render();
+        }).catch(function () {
+            buttons.forEach(function (b) { b.disabled = false; });
+            alert("Couldn't save that status change. Check that your admin account still has update access, then try again.");
+        });
     }
 
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-        loginStatus.textContent = "This page isn't connected to a database yet.";
-        loginStatus.className = 'admin-status is-error';
-    } else {
-        tryConsumeHashToken();
-        var session = getSession();
-        if (session) {
-            showLoggedIn();
-            loadInquiries(session.access_token);
-        } else {
-            showLoggedOut();
-        }
-
-        loginForm.addEventListener('submit', function (e) {
-            e.preventDefault();
-            var email = loginForm.querySelector('[name=email]').value;
-            var submitBtn = loginForm.querySelector('.admin-submit-btn');
-            submitBtn.disabled = true;
-            loginStatus.textContent = 'Sending...';
-            loginStatus.className = 'admin-status';
-
-            fetch(SUPABASE_URL.replace(/\/$/, '') + '/auth/v1/otp', {
-                method: 'POST',
-                headers: {
-                    'apikey': SUPABASE_ANON_KEY,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    email: email,
-                    options: {
-                        shouldCreateUser: false,
-                        emailRedirectTo: window.location.origin + window.location.pathname
-                    }
-                })
-            }).then(function (res) {
-                if (!res.ok) throw new Error('Request failed');
-                loginStatus.textContent = 'Check your email for a login link.';
-                loginStatus.className = 'admin-status is-success';
-            }).catch(function () {
-                loginStatus.textContent = 'Something went wrong sending the login link — please try again.';
-                loginStatus.className = 'admin-status is-error';
-            }).finally(function () {
-                submitBtn.disabled = false;
+    /* ---------- filtering ---------- */
+    function visibleRows() {
+        var q = state.search.trim().toLowerCase();
+        return state.rows.filter(function (r) {
+            if (state.filter !== "All" && statusOf(r) !== state.filter) return false;
+            if (!q) return true;
+            return ["name", "email", "phone", "event_type", "event_location", "message"].some(function (k) {
+                return r[k] && String(r[k]).toLowerCase().indexOf(q) !== -1;
             });
         });
+    }
 
-        logoutBtn.addEventListener('click', function () {
-            clearSession();
-            showLoggedOut();
+    /* ---------- render ---------- */
+    function renderStats() {
+        var today = new Date(); today.setHours(0, 0, 0, 0);
+        var newCount = 0, upcoming = 0, pipeline = 0, booked = 0;
+
+        state.rows.forEach(function (r) {
+            var s = statusOf(r);
+            if (s === "New") newCount++;
+            if (s === "Booked") booked++;
+            if (s === "New" || s === "Contacted") pipeline += Number(r.estimated_total) || 0;
+            if (r.event_date && s !== "Declined") {
+                var p = String(r.event_date).split("-");
+                if (p.length === 3) {
+                    var d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+                    if (!isNaN(d) && d >= today) upcoming++;
+                }
+            }
         });
 
-        googleBtn.addEventListener('click', function () {
-            var redirectTo = window.location.origin + window.location.pathname;
-            window.location.href = SUPABASE_URL.replace(/\/$/, '') +
-                '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(redirectTo);
+        var frames = [
+            { value: newCount, label: "Needs reply", lead: newCount > 0 },
+            { value: upcoming, label: "Upcoming events", lead: false },
+            { value: "$" + pipeline.toFixed(0), label: "Open pipeline", lead: false },
+            { value: booked, label: "Booked", lead: false }
+        ];
+
+        clear(el.stats);
+        frames.forEach(function (f) {
+            var frame = node("div", "frame" + (f.lead ? " is-lead" : ""));
+            frame.appendChild(node("div", "frame-value", f.value));
+            frame.appendChild(node("div", "frame-label", f.label));
+            el.stats.appendChild(frame);
         });
+    }
+
+    function renderFilters() {
+        if (el.filters.childNodes.length) return; // built once
+        ["All"].concat(STATUSES).forEach(function (s) {
+            var b = node("button", "filter-chip" + (s === state.filter ? " is-active" : ""), s);
+            b.type = "button";
+            b.setAttribute("aria-pressed", String(s === state.filter));
+            b.addEventListener("click", function () {
+                state.filter = s;
+                Array.prototype.forEach.call(el.filters.children, function (c) {
+                    var on = c.textContent === s;
+                    c.classList.toggle("is-active", on);
+                    c.setAttribute("aria-pressed", String(on));
+                });
+                render();
+            });
+            el.filters.appendChild(b);
+        });
+    }
+
+    function renderList(rows) {
+        clear(el.list);
+
+        if (rows.length === 0) {
+            el.list.hidden = true;
+            el.listEmpty.hidden = false;
+            el.listEmptyText.textContent = state.rows.length === 0
+                ? "No inquiries yet. When someone submits the form on your site, they'll show up here."
+                : "No inquiries match that search. Try a different term or clear the filter.";
+            return;
+        }
+        el.list.hidden = false;
+        el.listEmpty.hidden = true;
+
+        rows.forEach(function (r) {
+            var li = document.createElement("li");
+            var btn = node("button", "list-item" + (r.id === state.selectedId ? " is-selected" : ""));
+            btn.type = "button";
+            if (r.id === state.selectedId) btn.setAttribute("aria-current", "true");
+
+            var top = node("div", "list-row");
+            top.appendChild(node("span", "list-name", r.name || "(no name)"));
+            var pill = node("span", "pill", statusOf(r));
+            pill.setAttribute("data-status", statusOf(r));
+            top.appendChild(pill);
+            btn.appendChild(top);
+
+            var bits = [];
+            if (r.event_type) bits.push(r.event_type);
+            if (r.event_date) bits.push(eventDate(r.event_date));
+            if (r.estimated_total) bits.push(money(r.estimated_total));
+            btn.appendChild(node("div", "list-meta", bits.join(" · ") || r.email || ""));
+
+            btn.addEventListener("click", function () {
+                state.selectedId = r.id;
+                document.body.classList.add("detail-open");
+                render();
+            });
+
+            li.appendChild(btn);
+            el.list.appendChild(li);
+        });
+    }
+
+    function pair(label, value, mono) {
+        var wrap = document.createElement("div");
+        wrap.appendChild(node("div", "dt", label));
+        wrap.appendChild(node("div", "dd" + (mono ? " num" : ""), value || "—"));
+        return wrap;
+    }
+
+    function renderDetail(rows) {
+        clear(el.detailCol);
+
+        var row = state.rows.filter(function (r) { return r.id === state.selectedId; })[0];
+        if (!row || rows.indexOf(row) === -1) {
+            if (rows.length > 0) {
+                var hint = node("div", "empty");
+                hint.appendChild(node("p", "empty-title", "Pick an inquiry"));
+                hint.appendChild(node("p", "empty-text", "Select someone on the left to see their full message, packages, and contact details."));
+                el.detailCol.appendChild(hint);
+            }
+            return;
+        }
+
+        var card = node("div", "detail");
+
+        var back = node("button", "detail-back", "← All inquiries");
+        back.type = "button";
+        back.addEventListener("click", function () {
+            document.body.classList.remove("detail-open");
+            state.selectedId = null;
+            render();
+        });
+        card.appendChild(back);
+
+        card.appendChild(node("h2", "detail-name", row.name || "(no name)"));
+
+        var contact = node("p", "detail-contact");
+        if (row.email) {
+            var mail = node("a", null, row.email);
+            mail.href = "mailto:" + row.email;
+            contact.appendChild(mail);
+        }
+        if (row.phone) {
+            if (row.email) contact.appendChild(document.createTextNode("  ·  "));
+            var tel = node("a", null, row.phone);
+            tel.href = "tel:" + String(row.phone).replace(/[^0-9+]/g, "");
+            contact.appendChild(tel);
+        }
+        contact.appendChild(document.createTextNode(
+            (row.email || row.phone ? "  ·  " : "") + "Received " + shortDate(row.created_at)
+        ));
+        card.appendChild(contact);
+
+        var statusRow = node("div", "status-row");
+        statusRow.setAttribute("role", "group");
+        statusRow.setAttribute("aria-label", "Set status");
+        var btns = [];
+        STATUSES.forEach(function (s) {
+            var b = node("button", "status-btn" + (statusOf(row) === s ? " is-current" : ""), s);
+            b.type = "button";
+            b.setAttribute("aria-pressed", String(statusOf(row) === s));
+            b.addEventListener("click", function () {
+                if (statusOf(row) === s) return;
+                updateStatus(row.id, s, btns);
+            });
+            btns.push(b);
+            statusRow.appendChild(b);
+        });
+        card.appendChild(statusRow);
+
+        var grid = node("div", "detail-grid");
+        grid.appendChild(pair("Event type", row.event_type));
+        grid.appendChild(pair("Event date", eventDate(row.event_date), true));
+        grid.appendChild(pair("Location", row.event_location));
+        grid.appendChild(pair("Guests", row.guest_count, true));
+        grid.appendChild(pair("Preferred contact", row.preferred_contact));
+        card.appendChild(grid);
+
+        if (row.message) {
+            var mb = node("div", "detail-block");
+            mb.appendChild(node("div", "dt", "Message"));
+            mb.appendChild(node("p", "detail-message", row.message));
+            card.appendChild(mb);
+        }
+
+        var pkgs = Array.isArray(row.interested_packages) ? row.interested_packages : [];
+        var pb = node("div", "detail-block");
+        pb.appendChild(node("div", "dt", "Interested in"));
+        if (pkgs.length === 0) {
+            pb.appendChild(node("p", "detail-message", "No packages selected."));
+        } else {
+            var ul = node("ul", "pkg-list");
+            pkgs.forEach(function (p) {
+                var li = node("li", "pkg-item");
+                li.appendChild(node("span", null, p.name));
+                li.appendChild(node("span", "pkg-qty",
+                    "×" + p.quantity + "   " + money(Number(p.price) * Number(p.quantity))));
+                ul.appendChild(li);
+            });
+            pb.appendChild(ul);
+            var tot = node("div", "pkg-total");
+            tot.appendChild(node("span", null, "Estimated total"));
+            tot.appendChild(node("span", "num", money(row.estimated_total)));
+            pb.appendChild(tot);
+        }
+        card.appendChild(pb);
+
+        el.detailCol.appendChild(card);
+    }
+
+    function render() {
+        var rows = visibleRows();
+        renderStats();
+        renderFilters();
+        renderList(rows);
+        renderDetail(rows);
+    }
+
+    /* ---------- CSV ---------- */
+    var CSV_COLS = ["created_at", "status", "name", "email", "phone", "preferred_contact",
+                    "event_type", "event_location", "event_date", "guest_count",
+                    "message", "interested_packages", "estimated_total"];
+
+    function csvCell(row, col) {
+        var v = row[col];
+        if (col === "status") v = statusOf(row);
+        if (col === "interested_packages") {
+            v = Array.isArray(v) ? v.map(function (p) { return p.name + " x" + p.quantity; }).join("; ") : "";
+        }
+        if (v == null) v = "";
+        return '"' + String(v).replace(/"/g, '""') + '"';
+    }
+
+    function exportCsv() {
+        var rows = visibleRows();
+        if (rows.length === 0) { alert("Nothing to export with the current search and filter."); return; }
+        var csv = CSV_COLS.join(",") + "\n" +
+            rows.map(function (r) {
+                return CSV_COLS.map(function (c) { return csvCell(r, c); }).join(",");
+            }).join("\n");
+        // BOM so Excel reads UTF-8 accents correctly (Quinceañera, Tomás…)
+        var blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = "inquiries-" + new Date().toISOString().slice(0, 10) + ".csv";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    /* ---------- wire up ---------- */
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+        el.loginStatus.textContent = "This page isn't connected to a database yet.";
+        el.loginStatus.className = "status is-error";
+        el.loginForm.querySelector("button").disabled = true;
+        el.googleBtn.disabled = true;
+        return;
+    }
+
+    el.loginForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var email = el.loginForm.querySelector("[name=email]").value;
+        var btn = el.loginForm.querySelector("button");
+        btn.disabled = true;
+        el.loginStatus.textContent = "Sending…";
+        el.loginStatus.className = "status";
+
+        fetch(api("/auth/v1/otp"), {
+            method: "POST",
+            headers: { "apikey": SUPABASE_ANON_KEY, "Content-Type": "application/json" },
+            body: JSON.stringify({
+                email: email,
+                options: {
+                    shouldCreateUser: false,
+                    emailRedirectTo: window.location.origin + window.location.pathname
+                }
+            })
+        }).then(function (res) {
+            if (!res.ok) throw new Error("otp failed");
+            el.loginStatus.textContent = "Check your email for the login link.";
+            el.loginStatus.className = "status is-success";
+        }).catch(function () {
+            el.loginStatus.textContent = "Couldn't send the link. Check the address and try again.";
+            el.loginStatus.className = "status is-error";
+        }).finally(function () { btn.disabled = false; });
+    });
+
+    el.googleBtn.addEventListener("click", function () {
+        var redirectTo = window.location.origin + window.location.pathname;
+        window.location.href = api("/auth/v1/authorize?provider=google&redirect_to=" + encodeURIComponent(redirectTo));
+    });
+
+    el.logoutBtn.addEventListener("click", function () {
+        clearSession();
+        state.rows = [];
+        state.selectedId = null;
+        showSignedOut();
+        el.loginStatus.textContent = "";
+        el.loginStatus.className = "status";
+    });
+
+    el.search.addEventListener("input", function () {
+        state.search = el.search.value;
+        render();
+    });
+
+    el.exportBtn.addEventListener("click", exportCsv);
+
+    Array.prototype.forEach.call(el.sections.children, function (tab) {
+        tab.addEventListener("click", function () {
+            var target = tab.getAttribute("data-section");
+            Array.prototype.forEach.call(el.sections.children, function (t) {
+                t.classList.toggle("is-active", t === tab);
+            });
+            document.querySelectorAll("[data-panel]").forEach(function (p) {
+                p.hidden = p.getAttribute("data-panel") !== target;
+            });
+            document.body.classList.remove("detail-open");
+        });
+    });
+
+    consumeHashToken();
+    if (getSession()) {
+        showSignedIn();
+        loadInquiries();
+    } else {
+        showSignedOut();
     }
 })();
 </script>
