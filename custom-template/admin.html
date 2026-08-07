@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Admin — {{clubName}}</title>
+    <link rel="stylesheet" href="app-shell.css">
+    {{themeOverrideStyle}}
+    <style>
+        .admin-wrap { max-width: 1000px; margin: 0 auto; padding: 40px 20px 80px; }
+        .admin-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+        .admin-header h1 { font-family: var(--head-font); font-size: 1.6rem; margin: 0; }
+        .admin-logout-btn {
+            border: 1px solid var(--border); background: var(--surface); color: var(--text);
+            border-radius: 999px; padding: 8px 16px; font: inherit; cursor: pointer;
+        }
+        .admin-panel {
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+            padding: 24px; max-width: 420px;
+        }
+        .admin-field { display: flex; flex-direction: column; gap: 6px; font-size: .85rem; font-weight: 600; margin-bottom: 14px; }
+        .admin-field input {
+            font: inherit; font-weight: 400; color: var(--text); background: var(--bg);
+            border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px;
+        }
+        .admin-submit-btn {
+            border: 0; border-radius: 999px; padding: 10px 20px; background: var(--primary);
+            color: #fff; font: inherit; font-weight: 700; cursor: pointer;
+        }
+        .admin-submit-btn:disabled { opacity: .6; cursor: not-allowed; }
+        .admin-status { margin-top: 12px; font-size: .85rem; }
+        .admin-status.is-success { color: #1a7f37; }
+        .admin-status.is-error { color: #cf222e; }
+        .admin-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-lg); }
+        table.admin-table { width: 100%; border-collapse: collapse; font-size: .85rem; white-space: nowrap; }
+        table.admin-table th, table.admin-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); text-align: left; }
+        table.admin-table th { background: var(--surface); font-weight: 700; }
+        table.admin-table td.wrap-cell { white-space: normal; min-width: 200px; }
+        .admin-empty-note { color: var(--muted); font-size: .9rem; }
+        [hidden] { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="admin-wrap">
+    <div class="admin-header">
+        <h1>Inquiries</h1>
+        <button type="button" class="admin-logout-btn" id="admin-logout-btn" hidden>Log out</button>
+    </div>
+
+    <section class="admin-panel" id="admin-login-panel">
+        <p>Enter your admin email — we'll send you a one-time login link.</p>
+        <form id="admin-login-form">
+            <label class="admin-field">
+                <span>Email</span>
+                <input type="email" name="email" required>
+            </label>
+            <button type="submit" class="admin-submit-btn">Send Login Link</button>
+        </form>
+        <div class="admin-status" id="admin-login-status" aria-live="polite"></div>
+    </section>
+
+    <section id="admin-data-panel" hidden>
+        <div class="admin-table-wrap">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Received</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Preferred Contact</th>
+                        <th>Event Type</th>
+                        <th>Event Location</th>
+                        <th>Event Date</th>
+                        <th>Guests</th>
+                        <th>Message</th>
+                        <th>Interested Packages</th>
+                        <th>Est. Total</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-table-body"></tbody>
+            </table>
+        </div>
+        <p class="admin-empty-note" id="admin-empty-note" hidden>No inquiries yet.</p>
+    </section>
+</div>
+
+<script>
+(function () {
+    var SUPABASE_URL = "{{supabaseUrl}}";
+    var SUPABASE_ANON_KEY = "{{supabaseAnonKey}}";
+    var SESSION_KEY = 'admin_session';
+
+    var loginPanel = document.getElementById('admin-login-panel');
+    var dataPanel = document.getElementById('admin-data-panel');
+    var loginForm = document.getElementById('admin-login-form');
+    var loginStatus = document.getElementById('admin-login-status');
+    var logoutBtn = document.getElementById('admin-logout-btn');
+    var tableBody = document.getElementById('admin-table-body');
+    var emptyNote = document.getElementById('admin-empty-note');
+
+    function getSession() {
+        try {
+            var raw = sessionStorage.getItem(SESSION_KEY);
+            if (!raw) return null;
+            var session = JSON.parse(raw);
+            if (!session.access_token || !session.expires_at || Date.now() >= session.expires_at) return null;
+            return session;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function setSession(tokenResponse) {
+        var expires_at = Date.now() + (tokenResponse.expires_in || 3600) * 1000;
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+            access_token: tokenResponse.access_token,
+            expires_at: expires_at
+        }));
+    }
+
+    function clearSession() {
+        sessionStorage.removeItem(SESSION_KEY);
+    }
+
+    function formatPackages(list) {
+        if (!list || !list.length) return "";
+        return list.map(function (p) { return p.name + " x" + p.quantity; }).join(", ");
+    }
+
+    function escapeText(value) {
+        var div = document.createElement('div');
+        div.textContent = value == null ? "" : String(value);
+        return div.innerHTML;
+    }
+
+    function renderRows(rows) {
+        if (!rows || rows.length === 0) {
+            tableBody.innerHTML = "";
+            emptyNote.hidden = false;
+            return;
+        }
+        emptyNote.hidden = true;
+        tableBody.innerHTML = rows.map(function (r) {
+            return "<tr>" +
+                "<td>" + escapeText(r.created_at ? new Date(r.created_at).toLocaleString() : "") + "</td>" +
+                "<td>" + escapeText(r.name) + "</td>" +
+                "<td>" + escapeText(r.email) + "</td>" +
+                "<td>" + escapeText(r.phone) + "</td>" +
+                "<td>" + escapeText(r.preferred_contact) + "</td>" +
+                "<td>" + escapeText(r.event_type) + "</td>" +
+                "<td>" + escapeText(r.event_location) + "</td>" +
+                "<td>" + escapeText(r.event_date) + "</td>" +
+                "<td>" + escapeText(r.guest_count) + "</td>" +
+                "<td class=\"wrap-cell\">" + escapeText(r.message) + "</td>" +
+                "<td class=\"wrap-cell\">" + escapeText(formatPackages(r.interested_packages)) + "</td>" +
+                "<td>" + (r.estimated_total != null ? "$" + Number(r.estimated_total).toFixed(2) : "") + "</td>" +
+                "</tr>";
+        }).join("");
+    }
+
+    function showLoggedIn() {
+        loginPanel.hidden = true;
+        dataPanel.hidden = false;
+        logoutBtn.hidden = false;
+    }
+
+    function showLoggedOut() {
+        loginPanel.hidden = false;
+        dataPanel.hidden = true;
+        logoutBtn.hidden = true;
+    }
+
+    function loadInquiries(accessToken) {
+        fetch(SUPABASE_URL.replace(/\/$/, '') + '/rest/v1/inquiries?select=*&order=created_at.desc', {
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': 'Bearer ' + accessToken
+            }
+        }).then(function (res) {
+            if (!res.ok) throw new Error('Request failed');
+            return res.json();
+        }).then(function (rows) {
+            renderRows(rows);
+        }).catch(function () {
+            loginStatus.textContent = 'Could not load inquiries — your session may have expired, try logging in again.';
+            loginStatus.className = 'admin-status is-error';
+            clearSession();
+            showLoggedOut();
+        });
+    }
+
+    function tryConsumeHashToken() {
+        var hash = window.location.hash;
+        if (!hash || hash.indexOf('access_token') === -1) return false;
+        var params = new URLSearchParams(hash.slice(1));
+        var accessToken = params.get('access_token');
+        var expiresIn = params.get('expires_in');
+        if (!accessToken) return false;
+        setSession({ access_token: accessToken, expires_in: expiresIn ? parseInt(expiresIn, 10) : 3600 });
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+        return true;
+    }
+
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+        loginStatus.textContent = "This page isn't connected to a database yet.";
+        loginStatus.className = 'admin-status is-error';
+    } else {
+        tryConsumeHashToken();
+        var session = getSession();
+        if (session) {
+            showLoggedIn();
+            loadInquiries(session.access_token);
+        } else {
+            showLoggedOut();
+        }
+
+        loginForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var email = loginForm.querySelector('[name=email]').value;
+            var submitBtn = loginForm.querySelector('.admin-submit-btn');
+            submitBtn.disabled = true;
+            loginStatus.textContent = 'Sending...';
+            loginStatus.className = 'admin-status';
+
+            fetch(SUPABASE_URL.replace(/\/$/, '') + '/auth/v1/otp', {
+                method: 'POST',
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: email,
+                    options: {
+                        shouldCreateUser: false,
+                        emailRedirectTo: window.location.origin + window.location.pathname
+                    }
+                })
+            }).then(function (res) {
+                if (!res.ok) throw new Error('Request failed');
+                loginStatus.textContent = 'Check your email for a login link.';
+                loginStatus.className = 'admin-status is-success';
+            }).catch(function () {
+                loginStatus.textContent = 'Something went wrong sending the login link — please try again.';
+                loginStatus.className = 'admin-status is-error';
+            }).finally(function () {
+                submitBtn.disabled = false;
+            });
+        });
+
+        logoutBtn.addEventListener('click', function () {
+            clearSession();
+            showLoggedOut();
+        });
+    }
+})();
+</script>
+
+</body>
+</html>

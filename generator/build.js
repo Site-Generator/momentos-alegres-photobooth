@@ -662,6 +662,23 @@ function renderAppShellPage(club, variant) {
     });
 }
 
+// Standalone admin page (not part of the app-shell's tab nav) for viewing
+// inquiries. Reuses the same Supabase project as the inquiry form, but logs
+// in separately via magic link — the public form's key can only insert.
+function jsStringLiteralSafe(value) {
+    return JSON.stringify(value || "").slice(1, -1);
+}
+
+function renderAdminPage(club) {
+    const template = fs.readFileSync(resolveTemplatePath("admin.html"), "utf8");
+    return fillTokens(template, {
+        clubName: escapeHtml(club.clubName),
+        themeOverrideStyle: renderThemeOverrideStyle(club.theme),
+        supabaseUrl: jsStringLiteralSafe(club.inquiryForm && club.inquiryForm.supabaseUrl),
+        supabaseAnonKey: jsStringLiteralSafe(club.inquiryForm && club.inquiryForm.supabaseAnonKey),
+    });
+}
+
 // ---------- Images: copy, resize+compress anything > 1600px ----------
 async function copyAndOptimizeImages(clubDir) {
     const srcDir = path.join(clubDir, "images");
@@ -792,7 +809,8 @@ async function buildClub(slug, validate) {
         const variant = mode === "multipage" ? "no-teasers" : "teasers";
         fs.writeFileSync(path.join(DIST_DIR, "index.html"), renderAppShellPage(club, variant), "utf8");
         fs.copyFileSync(resolveTemplatePath("app-shell.css"), path.join(DIST_DIR, "app-shell.css"));
-        generatedFiles = ["index.html"];
+        fs.writeFileSync(path.join(DIST_DIR, "admin.html"), renderAdminPage(club), "utf8");
+        generatedFiles = ["index.html", "admin.html"];
     }
 
     await copyAndOptimizeImages(clubDir);
