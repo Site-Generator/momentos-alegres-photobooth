@@ -29,6 +29,13 @@
             color: #fff; font: inherit; font-weight: 700; cursor: pointer;
         }
         .admin-submit-btn:disabled { opacity: .6; cursor: not-allowed; }
+        .admin-google-btn {
+            width: 100%; border: 1px solid var(--border); border-radius: 999px; padding: 10px 20px;
+            background: var(--bg); color: var(--text); font: inherit; font-weight: 600; cursor: pointer;
+        }
+        .admin-google-btn:hover { background: var(--surface); }
+        .admin-divider { display: flex; align-items: center; gap: 10px; margin: 16px 0; color: var(--muted); font-size: .8rem; }
+        .admin-divider::before, .admin-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
         .admin-status { margin-top: 12px; font-size: .85rem; }
         .admin-status.is-success { color: #1a7f37; }
         .admin-status.is-error { color: #cf222e; }
@@ -50,6 +57,8 @@
     </div>
 
     <section class="admin-panel" id="admin-login-panel">
+        <button type="button" class="admin-google-btn" id="admin-google-btn">Sign in with Google</button>
+        <div class="admin-divider"><span>or</span></div>
         <p>Enter your admin email — we'll send you a one-time login link.</p>
         <form id="admin-login-form">
             <label class="admin-field">
@@ -98,6 +107,7 @@
     var loginForm = document.getElementById('admin-login-form');
     var loginStatus = document.getElementById('admin-login-status');
     var logoutBtn = document.getElementById('admin-logout-btn');
+    var googleBtn = document.getElementById('admin-google-btn');
     var tableBody = document.getElementById('admin-table-body');
     var emptyNote = document.getElementById('admin-empty-note');
 
@@ -253,6 +263,12 @@
         logoutBtn.addEventListener('click', function () {
             clearSession();
             showLoggedOut();
+        });
+
+        googleBtn.addEventListener('click', function () {
+            var redirectTo = window.location.origin + window.location.pathname;
+            window.location.href = SUPABASE_URL.replace(/\/$/, '') +
+                '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(redirectTo);
         });
     }
 })();
