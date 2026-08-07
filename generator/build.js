@@ -473,32 +473,47 @@ function renderHomeTabContent(club, variant) {
     return parts.filter(Boolean).join("\n");
 }
 
-function renderEventsTabContent(events) {
-    if (!events || events.length === 0) {
-        return `<h2 class="tab-heading">Inquiry</h2><p class="empty-note">No events scheduled yet — check back soon.</p>`;
+function formatPrice(n) {
+    return "$" + Number(n).toFixed(2);
+}
+
+// Packages/pricing list for the Inquiry tab. Each card carries its price in
+// data-price; the quantity stepper (see custom-template/app-shell.html's
+// inline script) reads that plus its own qty-value to keep the running
+// total in the sticky bar below in sync — no framework, just delegated
+// click handlers.
+function renderInquiryTabContent(packages) {
+    if (!packages || packages.length === 0) {
+        return `<h2 class="tab-heading">Inquiry</h2><p class="empty-note">No packages listed yet — check back soon.</p>`;
     }
-    const groups = groupEventsByMonth(events).map(grp => {
-        const cards = grp.events.map(e => {
-            const { d } = dateParts(e.date);
-            return `
-        <div class="event-card2">
-          <div class="event-day-col">
-            <span class="event-day-num">${d}</span>
-            <span class="event-day-wd">${weekdayAbbrev(e.date)}</span>
-          </div>
-          <div class="event-info">
-            <h3 class="event-card2-title">${escapeHtml(e.title)}</h3>
-            ${e.description ? `<p class="event-card2-desc">${escapeHtml(e.description)}</p>` : ""}
+    const cards = packages.map(p => {
+        const price = Number(p.price) || 0;
+        const photo = p.photo
+            ? `<div class="package-photo"><img src="${resolveImageSrc(p.photo)}" alt="" loading="lazy"></div>`
+            : "";
+        return `
+        <div class="package-card" data-price="${price}">
+          ${photo}
+          <div class="package-body">
+            <h3 class="package-name">${escapeHtml(p.name)}</h3>
+            ${p.description ? `<p class="package-desc">${escapeHtml(p.description)}</p>` : ""}
+            <div class="package-price">${formatPrice(price)}</div>
+            <div class="qty-stepper" role="group" aria-label="Quantity for ${escapeHtml(p.name)}">
+              <button type="button" class="qty-btn qty-minus" aria-label="Decrease quantity">&minus;</button>
+              <span class="qty-value">0</span>
+              <button type="button" class="qty-btn qty-plus" aria-label="Increase quantity">+</button>
+            </div>
           </div>
         </div>`;
-        }).join("");
-        return `
-      <div class="event-month-group">
-        <div class="event-month-label">${escapeHtml(grp.label)}</div>
-        <div class="event-grid">${cards}</div>
-      </div>`;
     }).join("");
-    return `<h2 class="tab-heading">Inquiry</h2>${groups}`;
+    return `
+    <h2 class="tab-heading">Inquiry</h2>
+    <p class="inquiry-lead">Pick the packages and add-ons you're interested in — the total updates as you go.</p>
+    <div class="package-grid">${cards}</div>
+    <div class="inquiry-total-bar">
+      <span class="inquiry-total-label">Total</span>
+      <span class="inquiry-total-value" id="inquiry-total">${formatPrice(0)}</span>
+    </div>`;
 }
 
 function renderMembersTabContent(club) {
@@ -582,7 +597,7 @@ function renderAppShellPage(club, variant) {
         clubName: clubNameEsc,
         metaDescription: escapeHtml((club.description || club.clubName).slice(0, 155)),
         homeTabContent: renderHomeTabContent(club, variant),
-        eventsTabContent: renderEventsTabContent(club.events),
+        eventsTabContent: renderInquiryTabContent(club.packages),
         membersTabContent: renderMembersTabContent(club),
         galleryTabContent: renderGallery(club.images, club.clubName) ||
             `<h2 class="tab-heading">Gallery</h2><p class="empty-note">No photos yet — check back soon.</p>`,

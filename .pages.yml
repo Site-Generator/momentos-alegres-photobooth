@@ -164,3 +164,25 @@ content:
           media: images
           multiple:
             max: 60
+      - name: packages
+        label: "Packages"
+        type: object
+        list: true
+        summary: "{name} — ${price}"
+        fields:
+          - name: name
+            label: "Name"
+            type: string
+            required: true
+          - name: description
+            label: "Description"
+            type: text
+          - name: photo
+            label: "Photo"
+            type: image
+            options:
+              media: images
+          - name: price
+            label: "Price (USD)"
+            type: number
+            required: true
