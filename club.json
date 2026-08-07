@@ -32,5 +32,9 @@
       "description": "Aside from the digital gallery, take home all of your event photos and videos on a USB flash drive for easy sharing and long-term storage.",
       "price": 30
     }
-  ]
+  ],
+  "inquiryForm": {
+    "supabaseUrl": "https://mgczvlkpcgbwdeesuyoo.supabase.co",
+    "supabaseAnonKey": "sb_publishable_uJ8HClppTm2qpf6nqNP9BA_VwGqY_BV"
+  }
 }
