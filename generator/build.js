@@ -250,7 +250,7 @@ function renderTeaser(section, count) {
 
 // ---------- Splittable section registry (drives split decisions AND nav) ----------
 const SPLITTABLE_SECTIONS = [
-    { key: "events",  label: "Events",          threshold: SPLIT_THRESHOLDS.events,  file: "events.html",  getItems: c => c.events  || [] },
+    { key: "events",  label: "Inquiry",         threshold: SPLIT_THRESHOLDS.events,  file: "events.html",  getItems: c => c.events  || [] },
     { key: "awards",  label: "Awards & Honors", threshold: SPLIT_THRESHOLDS.awards,  file: "awards.html",  getItems: c => c.awards  || [] },
     { key: "gallery", label: "Gallery",         threshold: SPLIT_THRESHOLDS.gallery, file: "gallery.html", getItems: c => c.images  || [] },
 ];
@@ -425,7 +425,7 @@ function renderMembersPreview(officers) {
         </div>`).join("");
     return `
     <div class="teaser-card">
-      <div class="teaser-head"><span class="teaser-card-title">Members</span><button type="button" class="see-all" data-tab-target="members">See all &rarr;</button></div>
+      <div class="teaser-head"><span class="teaser-card-title">Booking</span><button type="button" class="see-all" data-tab-target="members">See all &rarr;</button></div>
       <div class="mini-avatar-row">${preview}</div>
     </div>`;
 }
@@ -475,7 +475,7 @@ function renderHomeTabContent(club, variant) {
 
 function renderEventsTabContent(events) {
     if (!events || events.length === 0) {
-        return `<h2 class="tab-heading">Events</h2><p class="empty-note">No events scheduled yet — check back soon.</p>`;
+        return `<h2 class="tab-heading">Inquiry</h2><p class="empty-note">No events scheduled yet — check back soon.</p>`;
     }
     const groups = groupEventsByMonth(events).map(grp => {
         const cards = grp.events.map(e => {
@@ -498,7 +498,7 @@ function renderEventsTabContent(events) {
         <div class="event-grid">${cards}</div>
       </div>`;
     }).join("");
-    return `<h2 class="tab-heading">Events</h2>${groups}`;
+    return `<h2 class="tab-heading">Inquiry</h2>${groups}`;
 }
 
 function renderMembersTabContent(club) {
@@ -512,7 +512,7 @@ function renderMembersTabContent(club) {
           <div class="member-role">${escapeHtml(o.role)}</div>
         </div>`).join("")}
     </div>`;
-    return `<h2 class="tab-heading">Members</h2>${grid}${renderAwards(club.awards)}`;
+    return `<h2 class="tab-heading">Booking</h2>${grid}${renderAwards(club.awards)}`;
 }
 
 function renderMoreTabContent(club) {
