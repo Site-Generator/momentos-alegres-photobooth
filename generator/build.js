@@ -482,7 +482,11 @@ function formatPrice(n) {
 // inline script) reads that plus its own qty-value to keep the running
 // total in the sticky bar below in sync — no framework, just delegated
 // click handlers.
-function renderInquiryForm(inquiryForm) {
+// Just the contact/event fields — deliberately returns an unclosed <form>,
+// closed by whichever caller appends the packages + submit bar after it.
+// Keeping it one <form> means required-field validation and the submit
+// handler both still work regardless of what's visually in between.
+function renderInquiryFormFields(inquiryForm) {
     const supabaseUrl = (inquiryForm && inquiryForm.supabaseUrl) || "";
     const supabaseAnonKey = (inquiryForm && inquiryForm.supabaseAnonKey) || "";
     return `
@@ -528,16 +532,26 @@ function renderInquiryForm(inquiryForm) {
           <span>Message</span>
           <textarea name="message" rows="3"></textarea>
         </label>
-      </div>
-      <button type="submit" class="inquiry-submit-btn">Send Inquiry</button>
-      <div class="inquiry-form-status" aria-live="polite"></div>
-    </form>`;
+      </div>`;
 }
 
 function renderInquiryTabContent(packages, inquiryForm) {
-    const formHtml = renderInquiryForm(inquiryForm);
+    const formOpen = renderInquiryFormFields(inquiryForm);
+    // Total + submit share one bar so the button can never end up visually
+    // covered by the fixed/sticky total bar that floats above it on scroll.
+    const submitBar = `
+    <div class="inquiry-form-status" aria-live="polite"></div>
+    <div class="inquiry-total-bar">
+      <div class="inquiry-total-info">
+        <span class="inquiry-total-label">Total</span>
+        <span class="inquiry-total-value" id="inquiry-total">${formatPrice(0)}</span>
+      </div>
+      <button type="submit" class="inquiry-submit-btn">Send Inquiry</button>
+    </div>
+    </form>`;
+
     if (!packages || packages.length === 0) {
-        return `<h2 class="tab-heading">Inquiry</h2>${formHtml}<p class="empty-note">No packages listed yet — check back soon.</p>`;
+        return `<h2 class="tab-heading">Inquiry</h2>${formOpen}<p class="empty-note">No packages listed yet — check back soon.</p>${submitBar}`;
     }
     const cards = packages.map(p => {
         const price = Number(p.price) || 0;
@@ -561,13 +575,10 @@ function renderInquiryTabContent(packages, inquiryForm) {
     }).join("");
     return `
     <h2 class="tab-heading">Inquiry</h2>
-    ${formHtml}
+    ${formOpen}
     <p class="inquiry-lead">Pick the packages and add-ons you're interested in — the total updates as you go.</p>
     <div class="package-grid">${cards}</div>
-    <div class="inquiry-total-bar">
-      <span class="inquiry-total-label">Total</span>
-      <span class="inquiry-total-value" id="inquiry-total">${formatPrice(0)}</span>
-    </div>`;
+    ${submitBar}`;
 }
 
 function renderMembersTabContent(club) {
