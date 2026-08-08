@@ -302,7 +302,7 @@ a { color: inherit; }
 
 .inquiry-consent {
     display: grid; grid-template-columns: 18px 1fr; column-gap: 8px; align-items: start;
-    font-weight: 400; font-size: .85rem; line-height: 1.3; margin-top: 22px;
+    font-weight: 400; font-size: .85rem; line-height: 1.3; margin-top: 14px;
 }
 .inquiry-consent input[type="checkbox"] {
     width: 18px; height: 18px; margin: 1px 0 0;
@@ -347,7 +347,7 @@ a { color: inherit; }
 .inquiry-total-row {
     display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
     background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg);
-    padding: 14px 18px; margin-top: 14px;
+    padding: 14px 18px; margin-top: 22px;
 }
 .inquiry-total-label { font-size: .85rem; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); }
 .inquiry-total-value { font-size: 1.3rem; font-weight: 700; color: var(--text); }

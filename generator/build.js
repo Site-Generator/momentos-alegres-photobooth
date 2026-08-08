@@ -541,15 +541,15 @@ function renderInquiryTabContent(packages, inquiryForm) {
     // bottom of the form (no longer a fixed/sticky bar), each as its own
     // block so the total and the submit action read as separate steps.
     const submitBar = `
+    <div class="inquiry-total-row">
+      <span class="inquiry-total-label">Total</span>
+      <span class="inquiry-total-value" id="inquiry-total">${formatPrice(0)}</span>
+    </div>
     <label class="inquiry-field inquiry-field-wide inquiry-consent">
       <input type="checkbox" name="consent" required>
       <span>I understand this is a booking inquiry and not a confirmed reservation *</span>
     </label>
     <div class="inquiry-form-status" aria-live="polite"></div>
-    <div class="inquiry-total-row">
-      <span class="inquiry-total-label">Total</span>
-      <span class="inquiry-total-value" id="inquiry-total">${formatPrice(0)}</span>
-    </div>
     <button type="submit" class="inquiry-submit-btn">Send Inquiry</button>
     </form>`;
 
