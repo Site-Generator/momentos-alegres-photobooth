@@ -497,12 +497,12 @@ function renderInquiryFormFields(inquiryForm) {
           <input type="text" name="name" required>
         </label>
         <label class="inquiry-field">
-          <span>Email *</span>
-          <input type="email" name="email" required>
+          <span>Email</span>
+          <input type="email" name="email">
         </label>
         <label class="inquiry-field">
-          <span>Phone</span>
-          <input type="tel" name="phone">
+          <span>Phone *</span>
+          <input type="tel" name="phone" required>
         </label>
         <label class="inquiry-field">
           <span>Preferred Contact Method</span>
@@ -521,8 +521,8 @@ function renderInquiryFormFields(inquiryForm) {
           <input type="text" name="event_location">
         </label>
         <label class="inquiry-field">
-          <span>Event Date</span>
-          <input type="date" name="event_date">
+          <span>Event Date *</span>
+          <input type="date" name="event_date" required>
         </label>
         <label class="inquiry-field">
           <span>Estimated Guest Count</span>
@@ -531,6 +531,10 @@ function renderInquiryFormFields(inquiryForm) {
         <label class="inquiry-field inquiry-field-wide">
           <span>Message</span>
           <textarea name="message" rows="3"></textarea>
+        </label>
+        <label class="inquiry-field inquiry-field-wide inquiry-consent">
+          <input type="checkbox" name="consent" required>
+          <span>I understand this is a booking inquiry and not a confirmed reservation *</span>
         </label>
       </div>`;
 }
