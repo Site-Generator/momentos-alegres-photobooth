@@ -302,7 +302,7 @@ a { color: inherit; }
 
 .inquiry-consent {
     display: grid; grid-template-columns: 18px 1fr; column-gap: 8px; align-items: start;
-    font-weight: 400; font-size: .85rem; line-height: 1.3;
+    font-weight: 400; font-size: .85rem; line-height: 1.3; margin-top: 22px;
 }
 .inquiry-consent input[type="checkbox"] {
     width: 18px; height: 18px; margin: 1px 0 0;
@@ -337,38 +337,30 @@ a { color: inherit; }
 .qty-btn:hover { background: var(--primary); color: #fff; }
 .qty-value { min-width: 20px; text-align: center; font-weight: 700; font-size: .95rem; }
 
-/* Status feedback sits right above the total/submit bar in both the
-   with-packages and no-packages layouts, and always reserves clearance for
-   the fixed bar below it — the fixed bar has no flow-space of its own to
-   push preceding content clear, so this margin has to carry that job. */
-.inquiry-form-status { margin: 0 0 74px; font-size: .85rem; min-height: 1.2em; }
+.inquiry-form-status { margin: 14px 0 0; font-size: .85rem; min-height: 1.2em; }
 .inquiry-form-status.is-success { color: #1a7f37; }
 .inquiry-form-status.is-error { color: #cf222e; }
 
-.inquiry-total-bar {
-    position: fixed; left: 0; right: 0; bottom: calc(64px + env(safe-area-inset-bottom));
-    z-index: 15; background: var(--primary); color: #fff;
-    display: flex; align-items: center; justify-content: space-between; gap: 14px;
-    padding: 12px 14px 12px 20px; box-shadow: 0 -4px 16px rgba(20,30,50,.15);
+/* Total and submit are two separate blocks in normal document flow (no
+   longer a fixed/sticky bar) — the total is its own labeled row, the submit
+   button is its own full-width control below it. */
+.inquiry-total-row {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+    background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 14px 18px; margin-top: 14px;
 }
-.inquiry-total-info { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
-.inquiry-total-label { font-size: .85rem; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; opacity: .85; }
-.inquiry-total-value { font-size: 1.2rem; font-weight: 700; }
+.inquiry-total-label { font-size: .85rem; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); }
+.inquiry-total-value { font-size: 1.3rem; font-weight: 700; color: var(--text); }
 
 .inquiry-submit-btn {
-    flex-shrink: 0; border: 0; border-radius: 999px; padding: 11px 20px;
-    background: #fff; color: var(--primary); font: inherit; font-weight: 700; cursor: pointer;
+    width: 100%; border: 0; border-radius: var(--radius-lg); padding: 14px 20px; margin-top: 14px;
+    background: var(--primary); color: #fff; font: inherit; font-size: 1rem; font-weight: 700; cursor: pointer;
 }
 .inquiry-submit-btn:hover { opacity: .9; }
 .inquiry-submit-btn:disabled { opacity: .6; cursor: not-allowed; }
 
 @media (min-width: 768px) {
     .package-grid { grid-template-columns: repeat(2, 1fr); }
-    .inquiry-form-status { margin-bottom: 10px; }
-    .inquiry-total-bar {
-        position: sticky; bottom: 0; left: auto; right: auto;
-        border-radius: var(--radius-lg); margin-top: 8px; box-shadow: var(--shadow);
-    }
 }
 @media (min-width: 992px) {
     .package-grid { grid-template-columns: repeat(3, 1fr); }

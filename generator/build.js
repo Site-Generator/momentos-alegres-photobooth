@@ -532,26 +532,25 @@ function renderInquiryFormFields(inquiryForm) {
           <span>Message</span>
           <textarea name="message" rows="3"></textarea>
         </label>
-        <label class="inquiry-field inquiry-field-wide inquiry-consent">
-          <input type="checkbox" name="consent" required>
-          <span>I understand this is a booking inquiry and not a confirmed reservation *</span>
-        </label>
       </div>`;
 }
 
 function renderInquiryTabContent(packages, inquiryForm) {
     const formOpen = renderInquiryFormFields(inquiryForm);
-    // Total + submit share one bar so the button can never end up visually
-    // covered by the fixed/sticky total bar that floats above it on scroll.
+    // Consent, total, and submit sit in the normal document flow at the
+    // bottom of the form (no longer a fixed/sticky bar), each as its own
+    // block so the total and the submit action read as separate steps.
     const submitBar = `
+    <label class="inquiry-field inquiry-field-wide inquiry-consent">
+      <input type="checkbox" name="consent" required>
+      <span>I understand this is a booking inquiry and not a confirmed reservation *</span>
+    </label>
     <div class="inquiry-form-status" aria-live="polite"></div>
-    <div class="inquiry-total-bar">
-      <div class="inquiry-total-info">
-        <span class="inquiry-total-label">Total</span>
-        <span class="inquiry-total-value" id="inquiry-total">${formatPrice(0)}</span>
-      </div>
-      <button type="submit" class="inquiry-submit-btn">Send Inquiry</button>
+    <div class="inquiry-total-row">
+      <span class="inquiry-total-label">Total</span>
+      <span class="inquiry-total-value" id="inquiry-total">${formatPrice(0)}</span>
     </div>
+    <button type="submit" class="inquiry-submit-btn">Send Inquiry</button>
     </form>`;
 
     if (!packages || packages.length === 0) {
